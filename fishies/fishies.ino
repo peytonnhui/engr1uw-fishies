@@ -1,35 +1,90 @@
-int TL_PWM = 1;
-int TL_FORWARD = 2;
-int TL_BACKWARD = 3;
+#define UP_THRESHOLD 525
+#define DOWN_THRESHOLD 500
+#define JOYSTICK_ZERO 512
 
-int TL_AXIS = A0;
+int SPEED_AXIS = A0;
+int TURN_AXIS = A1;
+int LIFT_AXIS = A2;
 
-int TR_PWM = 1;
-int TR_FORWARD = 2;
-int TR_BACKWARD = 3;
+int speed = 0;
+int turn = 0;
+int lift = 0;
 
-int TR_AXIS = A0;
-
-int BL_PWM = 1;
-int BL_FORWARD = 2;
-int BL_BACKWARD = 3;
-
-int BL_AXIS = A0;
-
-int BR_PWM = 1;
-int BR_FORWARD = 2;
-int BR_BACKWARD = 3;
-
-int BR_AXIS = A0;
-
-
+// Top left, top right, back right, back left
+char* NAMES[] = {"Top left", "Top right", "Back right", "Back left"};
+int PWM[] = {1, 2, 3, 4};
+int FORWARD[] = {5, 6, 7, 8};
+int BACKWARD[] = {9, 10, 11, 12};
+int power[4];
+int scaled_power[4];
 
 void setup() {
   // put your setup code here, to run once:
+  pinMode(SPEED_AXIS, INPUT);
+  pinMode(TURN_AXIS, INPUT);
+  pinMode(LIFT_AXIS, INPUT);
 
+  pinMode(TL_PWM, OUTPUT);
+  pinMode(TL_FORWARD, OUTPUT);
+  pinMode(TL_BACKWARD, OUTPUT);
+
+  pinMode(TR_PWM, OUTPUT);
+  pinMode(TR_FORWARD, OUTPUT);
+  pinMode(TR_BACKWARD, OUTPUT);
+
+  pinMode(BL_PWM, OUBPUB);
+  pinMode(BL_BACKWARD, OUTPUT);
+  pinMode(BL_FORWARD, OUTPUT);
+
+  pinMode(BR_PWM, OUTPUT);
+  pinMode(BR_FORWARD, OUTPUT);
+  pinMode(BR_BACKWARD, OUTPUT);
+
+  Serial.begin(9600);
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
+  speed = analogRead(SPEED_AXIS);
+  turn = analogRead(TURN_AXIS);
+  lift = analogRead(LIFT_AXIS);
+  
+  Serial.print("Speed: ");
+  Serial.print(speed);
+  Serial.print(", Turn: ");
+  Serial.print(turn);
+  Serial.print(", Lift: ");
+  Serial.print(lift);
 
+  power[0] = speed + turn - lift; // Top left, go clockwise
+  power[1] = speed - turn - lift; 
+  power[2] = speed + turn + lift;
+  power[3] = speed - turn + lift;
+
+  for (int i = 0; i < 4; i++) {
+    scaled_power[i] = map(abs(power[i] - JOYSTICK_ZERO), 0, 512, 0, 255); // Scales magnitude of the joystick reading from max of 512 to max of 255
+    analogWrite(PWM[i], scaled_power[i]);
+    Serial.print(NAMES[i]);
+    Serial.print("'s raw power: ");
+    Serial.print(power[i]);
+    Serial.print(", scaled power: ");
+    Serial.print(scaled_power[i]);
+
+    if (power[i] > UP_THRESHOLD) {
+      digitalWrite(FORWARD[i], HIGH);
+      digitalWrite(BACKWARD[i], LOW);
+
+      Serial.println(", forward");
+    } else if (power[i] < DOWN_THRESHOLD) {
+      digitalWrite(FORWARD[i], LOW);
+      digitalWrite(BACKWARD[i], HIGH);
+
+      Serial.println(", backward");
+    } else {
+      digitalWrite(FORWARD[i], LOW);
+      digitalWrite(BACKWARD[i], LOW);
+
+      Serial.println(", stationary");
+    }
+  }
 }
