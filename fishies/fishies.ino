@@ -12,9 +12,9 @@ int lift = 0;
 
 // Top left, top right, back right, back left
 char* NAMES[] = {"Top left", "Top right", "Back right", "Back left"};
-int PWM[] = {1, 2, 3, 4};
-int FORWARD[] = {5, 6, 7, 8};
-int BACKWARD[] = {9, 10, 11, 12};
+int PWM[] = {1, 4, 7, 10};
+int FORWARD[] = {2, 5, 8, 11};
+int BACKWARD[] = {3, 6, 9, 12};
 int power[4];
 int scaled_power[4];
 
